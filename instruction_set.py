@@ -1,0 +1,133 @@
+from memory_system import MemoryBank, MemoryType
+from operation import Operation
+from typing import List
+from instruction import Instruction
+import numpy as np
+from program import Program
+class InstructionSet:
+    """
+    Generates random valid instructions for typed LGP.
+    
+    Responsibilities:
+    - Store available operations
+    - Generate type-safe random instructions
+    - Respect obs (read-only) vs working (read-write) distinction
+    """
+    
+    def __init__(self, 
+                 operations: List[Operation],
+                memory: MemoryBank):
+        """
+        Args:
+            operations: List of operation instances to use
+            n_scalar: Number of working scalar registers
+            n_vector: Number of working vector registers
+            n_matrix: Number of working matrix registers
+            n_obs_scalar: Number of observation scalar registers
+            n_obs_vector: Number of observation vector registers
+            n_obs_matrix: Number of observation matrix registers
+        """
+        self.operations = operations
+        self.n_scalar = memory.n_scalar
+        self.n_vector = memory.n_vector
+        self.n_matrix = memory.n_matrix
+        self.n_obs_scalar = memory.n_obs_scalar
+        self.n_obs_vector = memory.n_obs_vector
+        self.n_obs_matrix = memory.n_obs_matrix
+
+        
+     
+        # Pre-compute index ranges for efficiency
+        self._source_ranges = {
+            MemoryType.SCALAR: (
+                list(range(-self.n_obs_scalar, 0)) +  # Obs: [-n, ..., -1]
+                list(range(0, self.n_scalar))           # Work: [0, ..., n-1]
+            ),
+            MemoryType.VECTOR: (
+                list(range(-self.n_obs_vector, 0)) +
+                list(range(0, self.n_vector))
+            ),
+            MemoryType.MATRIX: (
+                list(range(-self.n_obs_matrix, 0)) +
+                list(range(0, self.n_matrix))
+            ),
+        }
+        
+        self._dest_ranges = {
+            MemoryType.SCALAR: list(range(0, self.n_scalar)),    # Work only
+            MemoryType.VECTOR: list(range(0, self.n_vector)),
+            MemoryType.MATRIX: list(range(0, self.n_matrix)),
+        }
+    
+    def generate_random_instruction(self, rng=None) -> Instruction:
+        """
+        Generate a random type-safe instruction.
+        
+        Args:
+            rng: numpy random generator (optional)
+        
+        Returns:
+            Valid Instruction
+        """
+        if rng is None:
+            rng = np.random.default_rng()
+        
+        # Pick random operation
+        op = rng.choice(self.operations)
+        
+        # Pick source registers based on operation's input types
+        source_types = op.input_types()
+        source_indices = []
+        for src_type in source_types:
+            # Can read from BOTH obs and working registers
+            valid_indices = self._source_ranges[src_type]
+            source_indices.append(rng.choice(valid_indices))
+        
+        # Pick destination register (working registers only)
+        dest_type = op.output_type()
+        dest_index = rng.choice(self._dest_ranges[dest_type])
+        
+        return Instruction(op, dest_type, dest_index, source_types, source_indices)
+    
+    def generate_random_program(self, length: int, rng=None):
+        """Generate a random program of given length"""
+        instructions = [
+            self.generate_random_instruction(rng) 
+            for _ in range(length)
+        ]
+        return Program(instructions)  
+    def get_random_operator(self, rng= None):
+        if rng is None:
+            rng = np.random.default_rng()
+        return rng.choice(self.operations)
+    def get_random_dest(self,dest_type,rng= None):
+        if rng is None:
+            rng = np.random.default_rng()
+        dest_index = rng.choice(self._dest_ranges[dest_type])
+        return dest_index
+    def get_random_source(self, source_type, rng= None):
+        source_index = rng.choice(self._source_ranges[source_type])
+        return source_index
+
+
+
+        
+
+        
+
+memory = MemoryBank(
+        n_scalar=8,
+        n_vector=4,
+        n_matrix=2,
+        n_obs_scalar=2,
+        n_obs_vector=1,
+        n_obs_matrix=1,
+        vector_size=10,
+        matrix_shape=(84, 84)
+    )
+from operation import ALL_OPS
+operations = [op() for op in ALL_OPS]
+
+instruct_set = InstructionSet(operations, memory)
+op = instruct_set.get_random_operator()
+print(op.output_type())
