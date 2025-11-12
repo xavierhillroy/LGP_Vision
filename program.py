@@ -6,9 +6,10 @@ from collections import defaultdict
 from memory_system import MemoryBank, MemoryType
 
 class Program:
-    def __init__(self, instructions: List[Instruction]) -> None:
+    def __init__(self, instructions: List[Instruction], max_program_length = 256) -> None:
         self.instructions = instructions
         self._effective_instructions = None
+        self.max_program_length = max_program_length
     def execute(self, memory:MemoryBank):
         for instruction in self.instructions:
             instruction.execute(memory)

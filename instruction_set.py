@@ -106,6 +106,9 @@ class InstructionSet:
         dest_index = rng.choice(self._dest_ranges[dest_type])
         return dest_index
     def get_random_source(self, source_type, rng= None):
+        if rng is None:
+            rng = np.random.default_rng()
+        
         source_index = rng.choice(self._source_ranges[source_type])
         return source_index
 
@@ -115,19 +118,3 @@ class InstructionSet:
 
         
 
-memory = MemoryBank(
-        n_scalar=8,
-        n_vector=4,
-        n_matrix=2,
-        n_obs_scalar=2,
-        n_obs_vector=1,
-        n_obs_matrix=1,
-        vector_size=10,
-        matrix_shape=(84, 84)
-    )
-from operation import ALL_OPS
-operations = [op() for op in ALL_OPS]
-
-instruct_set = InstructionSet(operations, memory)
-op = instruct_set.get_random_operator()
-print(op.output_type())

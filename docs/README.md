@@ -9,6 +9,7 @@ This documentation provides comprehensive information about the Linear Genetic P
 ### Core Modules
 
 1. **[Memory System](memory_system.md)**
+   - `MemoryConfig` dataclass for describing memory layouts
    - `MemoryBank` class: Manages typed memory registers
    - `MemoryType` enum: Defines register types (SCALAR, VECTOR, MATRIX)
    - Observation vs working register distinction
@@ -39,24 +40,31 @@ This documentation provides comprehensive information about the Linear Genetic P
    - Memory configuration management
    - Random program generation
 
-### Evolutionary Components (Placeholders)
+6. **[Individual](individual.md)**
+   - `Individual` class: wraps program, memory, and fitness metadata
+   - `Individual.random()` helper for spawning new candidates
+   - Copy/offspring utilities for lineage tracking
 
-6. **[Genetic Operators](operators.md)**
-   - `GeneticOperators` class (placeholder)
-   - Planned mutation and crossover operations
+7. **[Population](population.md)**
+   - `PopulationConfig` and `Population` classes
+   - Tournament selection, elitism, statistics, and evaluation helpers
 
-7. **[Agent](agent.md)**
-   - `Agent` class (placeholder)
-   - Planned environment interaction
+8. **[Genetic Operators](operators.md)**
+   - Program-level micro and macro mutations
+   - Constant mutation (`mutate_constants`) with vectorised speedups
+   - One-/two-point crossover and program-level helpers
 
-8. **[Evaluator](evaluator.md)**
-   - `FitnessEvaluator` abstract base class
-   - `FlappyBirdEvaluator` (placeholder)
-   - Planned fitness evaluation system
+9. **[Evaluator](evaluator.md)**
+   - `FitnessEvaluator` base class with multi-episode support
+   - `SymbolicRegressionEvaluator` example
+   - Placeholder `FlappyBirdEvaluator` for future RL integration
 
-9. **[Population](population.md)**
-   - `Population` class (placeholder)
-   - Planned evolutionary algorithm management
+10. **[Evolution Engine](evolution_engine.md)**
+    - `EvolutionConfig` for loop parameters
+    - `EvolutionEngine` orchestration of evaluation, variation, and replacement
+
+11. **[Agent](agent.md)** *(future work)*
+    - Planned environment interaction layer for RL tasks
 
 ---
 
@@ -206,7 +214,44 @@ intron_ratio = program.get_intron_ratio(output_regs)
 print(f"Intron ratio: {intron_ratio:.1%}")
 ```
 
----
+### Running Evolution
+
+```python
+from memory_system import MemoryConfig, MemoryBank
+from instruction_set import InstructionSet
+from operation import ALL_OPS
+from population import Population, PopulationConfig
+from evolution_engine import EvolutionEngine, EvolutionConfig
+from operators import GeneticOperators
+from evaluator import SymbolicRegressionEvaluator
+import numpy as np
+
+rng = np.random.default_rng(0)
+
+memory_cfg = MemoryConfig(
+    n_scalar=6, n_vector=2, n_matrix=1,
+    n_obs_scalar=2, n_obs_vector=1, n_obs_matrix=0,
+    vector_size=4, matrix_shape=(3, 3)
+)
+
+template_memory = MemoryBank(**memory_cfg.__dict__)
+instr_set = InstructionSet([op() for op in ALL_OPS], template_memory)
+operators = GeneticOperators(instr_set, rng)
+
+pop_cfg = PopulationConfig(size=20, program_length=(6, 12), elitism=2)
+population = Population(pop_cfg, instr_set, memory_cfg, operators=operators, rng=rng)
+population.initialize_random()
+
+engine = EvolutionEngine(
+    population=population,
+    operators=operators,
+    evaluator=SymbolicRegressionEvaluator(rng),
+    config=EvolutionConfig(max_generations=10, mutation_threshold=0.2)
+)
+engine.run()
+best = population.best_ever
+print("Best fitness:", best.fitness)
+```
 
 ## Module Dependencies
 
@@ -214,12 +259,12 @@ print(f"Intron ratio: {intron_ratio:.1%}")
 operation.py
     ↓
 instruction.py ─→ memory_system.py
-    ↓
-program.py
-    ↓
-instruction_set.py
-    ↓
-(operators.py, agent.py, evaluator.py, population.py)
+    ↓                ↓
+program.py         individual.py
+    ↓                ↓
+instruction_set.py → population.py → evolution_engine.py
+    ↓                                ↓
+operators.py       evaluator.py     agent.py (future)
 ```
 
 ---
@@ -236,11 +281,9 @@ instruction_set.py
 
 ## Future Development
 
-The following components are planned but not yet implemented:
-- Genetic operators (mutation, crossover)
-- Agent class (environment interaction)
-- Fitness evaluation system
-- Population management and evolution
+- Reinforcement-learning specific evaluators (e.g., Flappy Bird integration)
+- Environment-facing agent wrappers for inference-time deployment
+- Additional diversity metrics and bloat control strategies
 
 ---
 

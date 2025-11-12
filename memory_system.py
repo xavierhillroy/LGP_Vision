@@ -9,6 +9,7 @@ The memory bank is divided into two regions:
 All data is stored as numpy arrays with dtype=np.float32 for efficiency.
 """
 
+from dataclasses import dataclass
 from enum import Enum
 import numpy as np
 from typing import Tuple
@@ -25,6 +26,21 @@ class MemoryType(Enum):
     SCALAR = "scalar"
     VECTOR = "vector"
     MATRIX = "matrix"
+
+
+@dataclass
+class MemoryConfig:
+    n_scalar: int
+    n_vector: int
+    n_matrix: int
+    n_obs_scalar: int
+    n_obs_vector: int
+    n_obs_matrix: int
+    vector_size: int
+    matrix_shape: Tuple[int, int]
+    init_scalar_range: Tuple[float, float] = (-2.0, 2.0)
+    init_vector_range: Tuple[float, float] = (-1.0, 1.0)
+    init_matrix_range: Tuple[float, float] = (-0.5, 0.5)
 
 class MemoryBank:
     """

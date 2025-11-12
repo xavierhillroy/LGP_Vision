@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `memory_system.py` module provides the foundational memory management system for Linear Genetic Programming (LGP). It implements a typed memory bank with separate regions for observation (read-only) and working (read-write) registers.
+The `memory_system.py` module provides the foundational memory management system for Linear Genetic Programming (LGP). It implements a typed memory bank with separate regions for observation (read-only) and working (read/write) registers, as well as a light-weight configuration dataclass for constructing banks on demand.
 
 ## Classes
 
@@ -25,6 +25,28 @@ print(MemoryType.MATRIX.value)  # "matrix"
 ```
 
 ---
+
+### `MemoryConfig`
+
+`MemoryConfig` is a dataclass that captures all size and initialization parameters required to build a `MemoryBank`. It is convenient for factories (e.g. `Individual.random`) that need to spawn fresh memory banks with consistent shapes.
+
+```python
+MemoryConfig(
+    n_scalar: int,
+    n_vector: int,
+    n_matrix: int,
+    n_obs_scalar: int,
+    n_obs_vector: int,
+    n_obs_matrix: int,
+    vector_size: int,
+    matrix_shape: Tuple[int, int],
+    init_scalar_range: Tuple[float, float] = (-2.0, 2.0),
+    init_vector_range: Tuple[float, float] = (-1.0, 1.0),
+    init_matrix_range: Tuple[float, float] = (-0.5, 0.5),
+)
+```
+
+Call `MemoryBank(**memory_config.__dict__)` to allocate a new bank with those settings.
 
 ### `MemoryBank`
 
