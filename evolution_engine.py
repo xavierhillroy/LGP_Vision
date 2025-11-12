@@ -17,6 +17,7 @@ class EvolutionConfig:
     max_generations: int = 100
     mutation_threshold: float = 0.1
     constant_mutation_rate: float = 0.0
+    crossover_threshold: float = 0.9
     verbose: bool = True
 
     def __post_init__(self) -> None:
@@ -47,7 +48,11 @@ class EvolutionEngine:
 
     def run(self) -> Population:
         for gen in range(self.config.max_generations):
+            restored_programs = self._prune_introns()
             self.population.evaluate_all(self.evaluator, verbose=self.config.verbose)
+            for individual, original_program in restored_programs:
+                individual.program = original_program
+
             self.population.record_statistics()
 
             if self.config.verbose:
@@ -57,8 +62,15 @@ class EvolutionEngine:
             offspring = []
             for _ in range(self.population.config.size):
                 parent1, parent2 = self.population.tournament_selection(3, num_winners=2)
-                child_program, _ = self.operators.crossover(parent1.program, parent2.program)
-                self.operators.mutate_program(child_program, self.config.mutation_threshold, self.rng)
+                child_program, _ = self.operators.crossover(parent1.program, parent2.program,self.config.mutation_threshold, self.rng)
+                self.operators.mutate_program(
+                    child_program,
+                    self.config.mutation_threshold,
+                    self.rng,
+                    max_length=self.population.config.max_program_length,
+                )
+                if self.population.config.max_program_length is not None:
+                    child_program.max_program_length = self.population.config.max_program_length
 
                 child = parent1.create_offspring(parent_ids=(parent1.id, parent2.id))
                 child.program = child_program
@@ -75,6 +87,18 @@ class EvolutionEngine:
         if self.config.verbose:
             print("\nEvolution complete.")
         return self.population
+
+    def _prune_introns(self) -> None:
+        outputs = getattr(self.evaluator, "output_registers", None)
+        if not outputs:
+            return []
+        restored = []
+        for individual in self.population.individuals:
+            pruned = individual.program.remove_introns(outputs)
+            pruned.max_program_length = individual.program.max_program_length
+            restored.append((individual, individual.program))
+            individual.program = pruned
+        return restored
 
 
 if __name__ == "__main__":

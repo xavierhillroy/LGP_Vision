@@ -45,8 +45,9 @@ EvolutionEngine(
    - Perform crossover (`operators.crossover`).
    - Mutate the child program (`operators.mutate_program`).
    - Optionally mutate memory constants.
-4. Apply elitism and replace the population.
-5. Repeat until `max_generations` is reached.
+4. Prune introns before evaluation when the evaluator exposes `output_registers`.
+5. Apply elitism and replace the population.
+6. Repeat until `max_generations` is reached.
 
 The engine returns the final population, with `population.best_ever` tracking the best individual encountered.
 
@@ -57,7 +58,7 @@ The engine returns the final population, with `population.best_ever` tracking th
 ## Example Usage
 
 ```python
-engine = EvolutionEngine(population, operators, evaluator, EvolutionConfig(max_generations=50))
+engine = EvolutionEngine(population, operators, evaluator, EvolutionConfig(max_generations=50, mutation_threshold=0.2))
 final_population = engine.run()
 final_population.print_summary()
 best = final_population.best_ever

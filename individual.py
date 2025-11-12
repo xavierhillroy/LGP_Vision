@@ -41,8 +41,10 @@ class Individual:
             new_id: If True, assigns new ID (for offspring).
                     If False, keeps same ID (for cloning/caching).
         """
+        program_copy = self.program.copy()
+        program_copy.max_program_length = self.program.max_program_length
         return Individual(
-            program=self.program.copy(),
+            program=program_copy,
             memory=self.memory.copy(),
             id=next(_individual_counter) if new_id else self.id,
             fitness=self.fitness,
@@ -74,9 +76,12 @@ class Individual:
         program_length: int,
         rng: Optional[np.random.Generator] = None,
         mutate_constants: bool = True,
+        max_program_length: Optional[int] = None,
     ) -> 'Individual':
         rng = rng or np.random.default_rng()
         program = instruction_set.generate_random_program(program_length, rng)
+        if max_program_length is not None:
+            program.max_program_length = max_program_length
         memory = MemoryBank(
             n_scalar=memory_config.n_scalar,
             n_vector=memory_config.n_vector,

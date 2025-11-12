@@ -57,6 +57,7 @@ This documentation provides comprehensive information about the Linear Genetic P
 9. **[Evaluator](evaluator.md)**
    - `FitnessEvaluator` base class with multi-episode support
    - `SymbolicRegressionEvaluator` example
+   - `CartPoleEvaluator` integrating gymnasium for RL
    - Placeholder `FlappyBirdEvaluator` for future RL integration
 
 10. **[Evolution Engine](evolution_engine.md)**
@@ -275,7 +276,7 @@ operators.py       evaluator.py     agent.py (future)
 2. **Index Wrapping**: Automatic index wrapping prevents errors
 3. **Separation of Concerns**: Observation and working registers are separate
 4. **Immutability**: Operations are immutable and reusable
-5. **Efficiency**: Pre-computed ranges and lazy evaluation where appropriate
+5. **Efficiency**: Pre-computed ranges, lazy evaluation, and intron pruning tied to evaluator outputs
 
 ---
 

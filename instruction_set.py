@@ -1,4 +1,4 @@
-from memory_system import MemoryBank, MemoryType
+from memory_system import MemoryBank, MemoryType, MemoryConfig
 from operation import Operation
 from typing import List
 from instruction import Instruction
@@ -16,7 +16,7 @@ class InstructionSet:
     
     def __init__(self, 
                  operations: List[Operation],
-                memory: MemoryBank):
+                memory_config: MemoryConfig):
         """
         Args:
             operations: List of operation instances to use
@@ -28,12 +28,12 @@ class InstructionSet:
             n_obs_matrix: Number of observation matrix registers
         """
         self.operations = operations
-        self.n_scalar = memory.n_scalar
-        self.n_vector = memory.n_vector
-        self.n_matrix = memory.n_matrix
-        self.n_obs_scalar = memory.n_obs_scalar
-        self.n_obs_vector = memory.n_obs_vector
-        self.n_obs_matrix = memory.n_obs_matrix
+        self.n_scalar = memory_config.n_scalar
+        self.n_vector = memory_config.n_vector
+        self.n_matrix = memory_config.n_matrix
+        self.n_obs_scalar = memory_config.n_obs_scalar
+        self.n_obs_vector = memory_config.n_obs_vector
+        self.n_obs_matrix = memory_config.n_obs_matrix
 
         
      

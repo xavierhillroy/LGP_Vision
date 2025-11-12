@@ -39,7 +39,7 @@ Population(
 
 ### Core Methods
 
-- `initialize_random(mutate_constants=True)`: rebuilds the population with freshly sampled individuals.
+- `initialize_random(mutate_constants=True)`: rebuilds the population with freshly sampled individuals (respecting `max_program_length`).
 - `tournament_selection(tournament_size, num_winners)`: returns references to winners based on fitness.
 - `select_best(n)`: fetches the top `n` individuals.
 - `apply_elitism(offspring)`: merges elites from the current population into a new offspring list.

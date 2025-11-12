@@ -97,7 +97,7 @@ class GeneticOperators:
         program.instructions.pop(remove_at)
         return program
 
-    def mutate_program(self, program, threshold, rng = None):
+    def mutate_program(self, program, threshold, rng = None, max_length = None):
         """Walk every instruction and mutate when random() <= threshold."""
         if rng is None:
             rng = np.random.default_rng()
@@ -110,8 +110,8 @@ class GeneticOperators:
                 elif mutation_type == 1:
                     program.instructions[i] = self.macro_mutate(program.instructions[i], rng)
                 elif mutation_type == 2:
-                    self.add_instruction_mutate(program, i, rng)
-                    i += 1
+                    if max_length is None or len(program.instructions) < max_length:
+                        self.add_instruction_mutate(program, i, rng)
                 else:
                     self.delete_instruction_mutate(program, i)
                     i -= 1

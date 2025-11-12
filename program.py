@@ -26,7 +26,7 @@ class Program:
                 source_indices=instr.source_indices.copy()
             )
             for instr in self.instructions
-        ])
+        ], max_program_length=self.max_program_length)
     
     def __len__(self) -> int:
         return len(self.instructions)
@@ -176,7 +176,7 @@ class Program:
             self.instructions[i] 
             for i in sorted(effective)  # Maintain order
         ]
-        return Program(effective_instructions)
+        return Program(effective_instructions, max_program_length=self.max_program_length)
     
     def get_effective_length(self, output_registers: List[Tuple[MemoryType, int]]) -> int:
         """

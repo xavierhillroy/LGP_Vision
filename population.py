@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Dict, TYPE_CHECKING
+from typing import List, Optional, Tuple, Dict
 
 import numpy as np
 
@@ -23,6 +23,7 @@ class PopulationConfig:
     size: int
     program_length: Tuple[int, int]  # (min_len, max_len]
     elitism: int = 1
+    max_program_length: Optional[int] = None
 
     def __post_init__(self) -> None:
         if self.size <= 0:
@@ -37,6 +38,8 @@ class PopulationConfig:
                 raise ValueError("Program length range must be positive with hi >= lo")
         else:
             raise TypeError("program_length must be a tuple of (min_len, max_len)")
+        if self.max_program_length is not None and self.max_program_length <= 0:
+            raise ValueError("max_program_length must be positive")
 
 
 class Population:
@@ -67,6 +70,12 @@ class Population:
 
     def _random_program_length(self) -> int:
         lo, hi = self.config.program_length
+        max_len = self.config.max_program_length
+        if max_len is not None:
+            hi = min(hi, max_len)
+            lo = min(lo, max_len)
+        if hi < lo:
+            hi = lo
         if lo == hi:
             return lo
         return int(self.rng.integers(lo, hi + 1))
@@ -74,16 +83,20 @@ class Population:
     def initialize_random(self, mutate_constants: bool = True) -> None:
         """Populate with random individuals."""
 
-        self.individuals = [
-            Individual.random(
+        individuals: List[Individual] = []
+        for _ in range(self.config.size):
+            ind = Individual.random(
                 instruction_set=self.instruction_set,
                 memory_config=self.memory_config,
                 program_length=self._random_program_length(),
                 rng=self.rng,
                 mutate_constants=mutate_constants,
+                max_program_length=self.config.max_program_length,
             )
-            for _ in range(self.config.size)
-        ]
+            if self.config.max_program_length is not None:
+                ind.program.max_program_length = self.config.max_program_length
+            individuals.append(ind)
+        self.individuals = individuals
         self.generation = 0
         self.best_ever = None
         self.best_ever_generation = 0
@@ -121,6 +134,9 @@ class Population:
             raise ValueError("New population size mismatch")
 
         self.individuals = new_individuals
+        if self.config.max_program_length is not None:
+            for ind in self.individuals:
+                ind.program.max_program_length = self.config.max_program_length
         self.generation += 1
 
         current_best = self.get_best()
